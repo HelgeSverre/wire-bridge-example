@@ -388,12 +388,16 @@ test.describe('wire-bridge acceptance', () => {
             };
         }, componentId);
 
+        // Every renderer is cycled, not just Preact: leak-free cleanup is the
+        // directive's main job, and each framework unmounts differently.
         for (let cycle = 0; cycle < 3; cycle++) {
-            await root.locator('[data-testid="control-toggle-preact"]').click();
-            await expect(page.locator('[data-testid="preact-form"]')).toHaveCount(0);
+            for (const renderer of RENDERERS) {
+                await root.locator(`[data-testid="control-toggle-${renderer}"]`).click();
+                await expect(page.locator(`[data-testid="${renderer}-form"]`)).toHaveCount(0);
 
-            await root.locator('[data-testid="control-toggle-preact"]').click();
-            await expect(page.locator('[data-testid="preact-form"]')).toBeVisible();
+                await root.locator(`[data-testid="control-toggle-${renderer}"]`).click();
+                await expect(page.locator(`[data-testid="${renderer}-form"]`)).toBeVisible();
+            }
         }
 
         // Let the cleanup microtasks settle, then assert counters are restored.

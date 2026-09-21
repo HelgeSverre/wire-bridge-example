@@ -11,6 +11,14 @@
 import { diagnostics } from './diagnostics.js';
 
 /**
+ * Every renderer that can be mounted and unmounted locally. The toggle works
+ * off the generic slot/host attributes, so this list is the only thing that
+ * decides which renderers get a button — and cleanup is the directive's main
+ * job, so all of them do.
+ */
+const TOGGLEABLE = ['preact', 'react', 'solid', 'svelte', 'vue', 'lit', 'alpine'];
+
+/**
  * @param {Element} host
  * @param {import('wire-bridge').WireBridge} bridge
  * @returns {{ destroy: () => void }}
@@ -58,7 +66,7 @@ export function mount(host, bridge) {
     const lifecycleBar = document.createElement('div');
     lifecycleBar.className = 'control-group';
 
-    for (const name of ['preact', 'solid']) {
+    for (const name of TOGGLEABLE) {
         const button = document.createElement('button');
         button.type = 'button';
         button.setAttribute('data-action', `toggle-${name}`);
@@ -103,7 +111,7 @@ export function mount(host, bridge) {
     }
 
     function refreshLifecycleLabels() {
-        for (const name of ['preact', 'solid']) {
+        for (const name of TOGGLEABLE) {
             const button = buttons.get(`toggle-${name}`);
             const slot = slotFor(name);
 
@@ -132,9 +140,12 @@ export function mount(host, bridge) {
         const existing = slot.querySelector(`[data-wire-frontend-host="${name}"]`);
 
         if (existing !== null) {
-            // Keep the server-rendered markup so the host can be recreated
-            // with the same wire:ignore/wire:frontend attributes.
-            localTemplates.set(slot, existing.cloneNode(true));
+            // Keep the host element so it can be recreated with the same
+            // wire:ignore/wire:frontend attributes. The clone is deliberately
+            // shallow: a deep clone would also copy whatever the renderer had
+            // drawn inside, and remounting would then re-insert that stale
+            // markup alongside the freshly mounted renderer.
+            localTemplates.set(slot, existing.cloneNode(false));
             existing.remove();
             diagnostics.logLine(`local unmount: ${name}`);
             status.textContent = `Unmounted ${name} locally.`;

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "deepwiki": {
+      "disabled": true
+    },
+    "context": {
+      "disabled": true
+    },
+    "pagenode": {
+      "disabled": true
+    }
+  }
+}

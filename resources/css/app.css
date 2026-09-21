@@ -1,0 +1,322 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+:root {
+    --ink: #17222d;
+    --muted: #5b6b7a;
+    --line: #d8e0e7;
+    --surface: #ffffff;
+    --background: #f4f7f9;
+    --accent: #1f6feb;
+    --accent-soft: #e8f0fe;
+    --danger: #b3261e;
+    --danger-soft: #fdecea;
+    --ok: #1a7f4b;
+}
+
+body {
+    margin: 0;
+    background: var(--background);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    line-height: 1.45;
+}
+
+.page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+}
+
+.page-header h1 {
+    margin: 0 0 0.35rem;
+    font-size: 1.9rem;
+    letter-spacing: -0.02em;
+}
+
+.page-header p {
+    margin: 0 0 0.75rem;
+    color: var(--muted);
+}
+
+.panels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.9rem 1rem 1rem;
+}
+
+.panel-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+}
+
+.panel-header h2 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.panel-note {
+    color: var(--muted);
+    font-size: 0.75rem;
+}
+
+.frontend-form .field-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+}
+
+.field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 0.75rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.field input[type='text'],
+.field input[type='number'] {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.4rem 0.5rem;
+    font: inherit;
+    color: var(--ink);
+    background: #fff;
+}
+
+.field input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.field-checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.45rem;
+    grid-column: 1 / -1;
+}
+
+.owners {
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    margin: 0.85rem 0 0;
+    padding: 0.6rem 0.75rem 0.75rem;
+}
+
+.owners legend {
+    font-size: 0.78rem;
+    color: var(--muted);
+    padding: 0 0.3rem;
+}
+
+.owner-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 0.5rem;
+}
+
+.frontend-footnote {
+    margin: 0.85rem 0 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.toolbar-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.5rem 0.65rem;
+}
+
+.toolbar-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-right: 0.15rem;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.control-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+button {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 7px;
+    padding: 0.4rem 0.7rem;
+    font: inherit;
+    font-size: 0.83rem;
+    cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.control-status,
+.control-error {
+    flex-basis: 100%;
+    font-size: 0.8rem;
+}
+
+.control-status {
+    color: var(--muted);
+}
+
+.control-error:not(:empty) {
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-radius: 6px;
+    padding: 0.35rem 0.5rem;
+}
+
+.inspectors {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.json {
+    margin: 0;
+    background: #0f1720;
+    color: #d7e2ee;
+    border-radius: 8px;
+    padding: 0.7rem 0.8rem;
+    font-size: 0.76rem;
+    line-height: 1.4;
+    overflow: auto;
+    max-height: 320px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.json-small {
+    max-height: 260px;
+    font-size: 0.72rem;
+}
+
+.status {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.status-block {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+}
+
+.status-label {
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+}
+
+.status-ok {
+    color: var(--ok);
+    font-size: 0.85rem;
+}
+
+.error-list {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: var(--danger);
+    font-size: 0.85rem;
+}
+
+.receipt {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+}
+
+.diagnostics summary {
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin: 0.5rem 0 0.35rem;
+}
+
+.second-instance {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 2px dashed var(--line);
+}
+
+a {
+    color: var(--accent);
+}
+
+code {
+    background: var(--accent-soft);
+    border-radius: 4px;
+    padding: 0.05rem 0.3rem;
+    font-size: 0.85em;
+}
+
+@media (max-width: 640px) {
+    .field-grid,
+    .owner-row {
+        grid-template-columns: 1fr;
+    }
+}

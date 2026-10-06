@@ -55,11 +55,14 @@ const THEME_CSS = `
   .owners { border-color: #232b38 !important; }
   .owners legend { color: #7d8aa0 !important; }
 
-  ${allPanels ? `
-  .panels { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
   .owners, .panel-note, .field:has(input[data-testid*='owner']) { display: none !important; }
   .field { min-width: 0 !important; }
   .field input[type='text'] { width: 100% !important; min-width: 0 !important; box-sizing: border-box !important; }
+  ${allPanels ? '' : `
+  .panel:is([data-testid='panel-react'], [data-testid='panel-vue'], [data-testid='panel-svelte'], [data-testid='panel-lit'], [data-testid='panel-alpine']) { display: none !important; }
+  `}
+  ${allPanels ? `
+  .panels { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
   ${Object.entries(PANEL_COLORS).map(([name, color]) => `
   [data-testid='panel-${name}'] { border-color: ${color} !important; box-shadow: 0 0 0 1px ${color}55, 0 18px 50px -18px ${color}aa !important; }
   [data-testid='panel-${name}'] h2 { color: ${color} !important; }
@@ -105,6 +108,27 @@ const THEME_CSS = `
   #wb-titlebar .wb-badge.bump { animation: wb-bump .5s ease-out; }
   @keyframes wb-bump { 0% { transform: scale(1.25); } 100% { transform: scale(1); } }
 
+  .page { padding-right: 318px !important; }
+
+  #wb-titlebar .wb-action {
+    font: inherit; font-size: .78rem; font-weight: 700; padding: 5px 12px; border-radius: 8px; cursor: pointer;
+    background: #161c27; border: 1px solid #2f3a4d; color: #e6ebf3;
+  }
+  #wb-titlebar .wb-action.wb-pressed { background: #ffd400; border-color: #ffd400; color: #111; }
+
+  #wb-php {
+    position: fixed; top: 54px; right: 26px; width: 270px; z-index: 99998;
+    background: #11151d; border: 1px solid #f4c430; border-radius: 14px; padding: 14px 16px 16px;
+    box-shadow: 0 0 0 1px #f4c43055, 0 18px 50px -18px #f4c430aa; font-family: var(--font-sans);
+  }
+  #wb-php h2 { margin: 0; font-size: 1.02rem; font-weight: 900; letter-spacing: .12em; color: #f4c430; }
+  #wb-php .wb-php-note { color: #7d8aa0; font-size: .68rem; margin: 4px 0 12px; }
+  #wb-php dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 7px 12px; font-size: .8rem; }
+  #wb-php dt { color: #94a1b6; }
+  #wb-php dd { margin: 0; color: #f4f7fb; font-weight: 700; font-family: ui-monospace, monospace; border-radius: 4px; padding: 0 4px; }
+  #wb-php dd.wb-flash { animation: wb-php-flash .9s ease-out; }
+  @keyframes wb-php-flash { 0% { background: #f4c430; color: #111; } 100% { background: transparent; } }
+
   #wb-cursor {
     position: fixed; left: 0; top: 0; width: 16px; height: 16px; margin: -8px 0 0 -8px;
     border-radius: 999px; background: #ffd400; box-shadow: 0 0 0 4px #ffd40033, 0 0 18px #ffd400aa;
@@ -114,13 +138,14 @@ const THEME_CSS = `
   @keyframes wb-click { 0% { box-shadow: 0 0 0 4px #ffffffaa, 0 0 26px #ffd400; } 100% { box-shadow: 0 0 0 4px #ffd40033, 0 0 18px #ffd400aa; } }
 `;
 
-const VIEWPORT_HEIGHT = allPanels ? 760 : 560;
+const VIEWPORT_WIDTH = allPanels ? 1440 : 1280;
+const VIEWPORT_HEIGHT = allPanels ? 760 : 410;
 
 const browser = await chromium.launch({ channel: 'chromium' });
 const context = await browser.newContext({
-    viewport: { width: 1280, height: VIEWPORT_HEIGHT },
+    viewport: { width: VIEWPORT_WIDTH, height: VIEWPORT_HEIGHT },
     deviceScaleFactor: 2,
-    recordVideo: { dir: videoDir, size: { width: 1280, height: VIEWPORT_HEIGHT } },
+    recordVideo: { dir: videoDir, size: { width: VIEWPORT_WIDTH, height: VIEWPORT_HEIGHT } },
 });
 
 // Count Livewire update requests from before any page script runs.
@@ -160,7 +185,7 @@ await page.addStyleTag({ content: THEME_CSS });
 await page.evaluate((allPanels) => {
     // Bold renderer labels.
     const labels = {
-        'panel-blade': 'LIVEWIRE',
+        'panel-blade': 'BLADE',
         'panel-preact': 'PREACT',
         'panel-solid': 'SOLID',
         ...(allPanels ? {
@@ -181,17 +206,94 @@ await page.evaluate((allPanels) => {
     bar.id = 'wb-titlebar';
     bar.innerHTML = `
         <div class="wb-brand">wire·<em>bridge</em></div>
-        <div class="wb-claim">one Livewire state &nbsp;→&nbsp; ${allPanels ? 'eight' : 'three'} renderers, editing together</div>
+        <div class="wb-claim" id="wb-claim">one Livewire state &nbsp;→&nbsp; ${allPanels ? 'eight' : 'three'} renderers, editing locally</div>
         <div class="wb-spacer"></div>
-        <div class="wb-badge" id="wb-badge"><span id="wb-requests">0</span> Livewire requests</div>
+        <button type="button" class="wb-action" id="wb-commit">Commit</button>
+        <button type="button" class="wb-action" id="wb-normalize">Normalize (PHP)</button>
+        <div class="wb-badge" id="wb-badge"><span id="wb-requests">0</span> <span id="wb-requests-label">Livewire requests</span></div>
     `;
     document.body.appendChild(bar);
+
+    // The title-bar buttons press the page's real control buttons, which sit in
+    // the hidden toolbar, so every request the counter shows is real.
+    for (const [overlay, control] of [['#wb-commit', 'control-commit'], ['#wb-normalize', 'control-normalize']]) {
+        bar.querySelector(overlay).addEventListener('click', (event) => {
+            const button = event.currentTarget;
+            button.classList.add('wb-pressed');
+            setTimeout(() => button.classList.remove('wb-pressed'), 500);
+            document.querySelector(`[data-testid="${control}"]`).click();
+        });
+    }
+
+    // Mirror of the page's own "Last server-rendered state" block (plain Blade
+    // JSON), so the take shows when PHP actually sees the edits.
+    const php = document.createElement('div');
+    php.id = 'wb-php';
+    php.innerHTML = `
+        <h2>PHP</h2>
+        <div class="wb-php-note">last server render</div>
+        <dl id="wb-php-fields"></dl>
+    `;
+    document.body.appendChild(php);
+
+    const phpFields = php.querySelector('#wb-php-fields');
+    const phpRows = [
+        ['name', (data) => data.name],
+        ['country', (data) => data.country],
+        ['isPep', (data) => data.isPep],
+        ['city', (data) => data.address?.city],
+        ['postalCode', (data) => data.address?.postalCode],
+    ];
+    const phpCells = new Map();
+
+    for (const [label] of phpRows) {
+        const dt = document.createElement('dt');
+        dt.textContent = label;
+        const dd = document.createElement('dd');
+        phpFields.append(dt, dd);
+        phpCells.set(label, dd);
+    }
+
+    let firstPhpRender = true;
+
+    setInterval(() => {
+        const source = document.querySelector('[data-testid="server-state"]');
+
+        if (!source) {
+            return;
+        }
+
+        const data = JSON.parse(source.textContent);
+
+        for (const [label, read] of phpRows) {
+            const cell = phpCells.get(label);
+            const value = JSON.stringify(read(data));
+
+            if (cell.textContent !== value) {
+                cell.textContent = value;
+
+                if (!firstPhpRender) {
+                    cell.classList.remove('wb-flash');
+                    void cell.offsetWidth;
+                    cell.classList.add('wb-flash');
+                }
+            }
+        }
+
+        firstPhpRender = false;
+    }, 60);
+
+    window.__wbClaim = (text) => {
+        bar.querySelector('#wb-claim').innerHTML = text;
+    };
 
     const requests = bar.querySelector('#wb-requests');
     const badge = bar.querySelector('#wb-badge');
 
     window.__wbBump = () => {
         requests.textContent = String(window.__wbRequests);
+        bar.querySelector('#wb-requests-label').textContent =
+            window.__wbRequests === 1 ? 'Livewire request' : 'Livewire requests';
         badge.classList.remove('bump');
         void badge.offsetWidth;
         badge.classList.add('bump');
@@ -255,6 +357,14 @@ const click = async (selector) => {
     await mainRoot.locator(selector).click();
 };
 
+const pressOverlay = async (selector) => {
+    await moveTo(selector);
+    await page.evaluate(() => window.__wbCursorClick());
+    await page.locator(selector).click();
+};
+
+const claim = (text) => page.evaluate((value) => window.__wbClaim(value), text);
+
 const typeInto = async (selector, text) => {
     await click(selector);
     await page.keyboard.press('ControlOrMeta+A');
@@ -268,7 +378,7 @@ await page.waitForTimeout(800);
 if (allPanels) {
     await typeInto('[data-testid="blade-name"]', 'Ada');
     await page.waitForTimeout(600);
-    await typeInto('[data-testid="react-country"]', 'SE');
+    await typeInto('[data-testid="react-country"]', 'se');
     await page.waitForTimeout(600);
     await click('[data-testid="vue-is-pep"]');
     await page.waitForTimeout(450);
@@ -284,7 +394,7 @@ await typeInto('[data-testid="blade-name"]', 'Ada');
 await page.waitForTimeout(650);
 
 // 2. Preact country edit.
-await typeInto('[data-testid="preact-country"]', 'SE');
+await typeInto('[data-testid="preact-country"]', 'se');
 await page.waitForTimeout(650);
 
 // 3. Solid checkbox + nested address edits.
@@ -295,6 +405,16 @@ await page.waitForTimeout(500);
 await typeInto('[data-testid="solid-postal-code"]', '0001');
 await page.waitForTimeout(1700);
 }
+
+// Then the round trip: Commit sends the local edits once, and a PHP action
+// changes state on the server that flows back into every renderer.
+await claim('Commit &nbsp;→&nbsp; one request; PHP sees the edits');
+await pressOverlay('#wb-commit');
+await page.waitForTimeout(1800);
+
+await claim('PHP upper-cases the country &nbsp;→&nbsp; every renderer updates');
+await pressOverlay('#wb-normalize');
+await page.waitForTimeout(2400);
 
 const recordedRequests = await page.evaluate(() => window.__wbRequests);
 console.log(`Livewire update requests during the take: ${recordedRequests}`);

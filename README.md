@@ -15,7 +15,7 @@ once:
 - an **Alpine** island using `x-data` with `init`/`destroy`, with no adapter in the
   package and no dependency installed — Livewire already ships Alpine
 
-<img src="docs/demo.gif" alt="Eight panels (Blade, Preact, Solid, React, Vue, Svelte, Lit, Alpine) editing one shared Livewire state, with a request counter that stays at 0" width="100%">
+<img src="docs/demo.gif" alt="Eight panels (Blade, Preact, Solid, React, Vue, Svelte, Lit, Alpine) editing one shared Livewire state with zero requests; then Commit sends one request and the PHP panel catches up, and a PHP action upper-cases the country in every panel" width="100%">
 
 Editing any view updates the other seven **without an HTTP request**. Committing and
 running PHP actions are explicit. Changes made by PHP propagate back to all views.

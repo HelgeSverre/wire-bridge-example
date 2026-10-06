@@ -219,14 +219,17 @@ need. Vue and Svelte are keyed off their file extensions and cannot collide.
 ## Demo behavior
 
 Eight panels (Blade, Preact, React, Solid, Svelte, Vue, Lit, Alpine) share one
-`AMLForm` state. Under them sit a browser-state inspector (bridge snapshot, updated
-locally) and a last server-rendered state inspector (plain Blade JSON, changed only
-after a server render). Typing never updates the server inspector: edits stay local
-until a button sends a request. **Commit** sends the pending edits as-is; **Normalize**,
-**Reset form**, **Replace owners**, **Save** and the wrapper toggles send them along with
-a PHP action. After any of these, the server inspector catches up. The controls commit, normalize on the server, reset the
-whole root, replace owners, save (a demonstration receipt, no database), and locally
-mount/unmount each framework host.
+`AMLForm` state. Under them sit two inspectors:
+
+- **Browser state** — the bridge snapshot, updated locally on every edit.
+- **Last server-rendered state** — plain Blade JSON, changed only after a server render.
+
+Typing never updates the server inspector; edits stay local until a request is sent.
+**Commit** sends the pending edits as-is. **Normalize (PHP)**, **Reset form (PHP)**,
+**Replace owners (PHP)**, **Save (PHP, demo)** and the wrapper toggles send them along
+with a PHP action. After any of these, the server inspector catches up. Save writes a
+demonstration receipt, not a database row. The Mount/Unmount buttons add and remove
+each framework host locally.
 
 A server-controlled toggle removes and restores the Preact and Solid wrappers during a
 Livewire morph, proving a `wire:ignore` host survives being removed and reintroduced.

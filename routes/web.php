@@ -3,8 +3,12 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect()->route('poc.wire-bridge');
+    return redirect()->route('order');
 });
+
+Route::get('/order', function () {
+    return view('order');
+})->name('order');
 
 Route::get('/poc/wire-bridge', function () {
     return view('poc.wire-bridge');

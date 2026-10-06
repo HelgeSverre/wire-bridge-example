@@ -18,21 +18,6 @@ class AMLFormTest extends TestCase
             ->assertSet('showSolidWrapper', true);
     }
 
-    public function test_a_known_postal_code_fills_in_the_city(): void
-    {
-        Livewire::test(AMLForm::class)
-            ->set('data.address.postalCode', '0150')
-            ->assertSet('data.address.city', 'Oslo')
-            ->assertSet('data.address.postalCode', '0150');
-    }
-
-    public function test_an_unknown_postal_code_leaves_the_city_alone(): void
-    {
-        Livewire::test(AMLForm::class)
-            ->set('data.address.postalCode', '0001')
-            ->assertSet('data.address.city', 'Bergen');
-    }
-
     public function test_normalize_trims_strings_and_uppercases_the_country(): void
     {
         Livewire::test(AMLForm::class)

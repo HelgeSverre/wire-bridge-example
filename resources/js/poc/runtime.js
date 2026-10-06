@@ -24,6 +24,13 @@ export const renderers = {
     alpine: { load: () => import('./alpine/mount.js') },
     inspector: { load: () => import('./inspector.js') },
     controls: { load: () => import('./controls.js') },
+
+    // The order builder showcase (resources/views/order.blade.php).
+    'order-items': { load: () => import('../order/react/mount.jsx') },
+    'order-totals': { load: () => import('../order/vue/mount.js') },
+    'order-checkout': { load: () => import('../order/svelte/mount.js') },
+    'order-badge': { load: () => import('../order/lit/mount.js') },
+    'order-notes': { load: () => import('../order/alpine/mount.js') },
 };
 
 const frontendDirective = createFrontendDirective({

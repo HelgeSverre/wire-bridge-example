@@ -1,30 +1,35 @@
 # Wire Bridge Example
 
 A runnable Laravel + Livewire 4 app for [wire-bridge](https://github.com/HelgeSverre/wire-bridge)
-([npm](https://www.npmjs.com/package/wire-bridge)). Clone it, install it, and open one
-page where a single mounted Livewire component owns form state for eight renderers at
-once:
+([npm](https://www.npmjs.com/package/wire-bridge)). Clone it, install it, and open an
+order builder where each part of the page is a different frontend framework, all
+editing one Livewire component's state:
 
-- **Blade** inputs using deferred `wire:model`
-- a **Preact** island using `useSyncExternalStore` from `preact/compat`
-- a **React** island using `useSyncExternalStore` from `react`
-- a **Solid** island using `createSignal` plus an explicit bridge subscription
-- a **Svelte** island using a plain store, from an adapter that imports nothing
-- a **Vue** island using `shallowRef` plus `onScopeDispose`
-- a **Lit** island using a `ReactiveController`, with no adapter in the package
-- an **Alpine** island using `x-data` with `init`/`destroy`, with no adapter in the
-  package and no dependency installed — Livewire already ships Alpine
+| Part of the page | Owned by |
+| --- | --- |
+| Customer fields, **Place order** | Blade (`wire:model`, `wire:click`) |
+| Line items (quantity, remove, add) | React |
+| Totals | Vue |
+| Delivery choice, coupon, **Apply** | Svelte |
+| Header badge (items, total, order number) | Lit |
+| Delivery notes | Alpine |
 
-<img src="docs/demo.gif" alt="Eight panels (Blade, Preact, Solid, React, Vue, Svelte, Lit, Alpine) editing one shared Livewire state with zero requests; a postal code is typed, then Commit sends one request and PHP fills in the city, which appears in every panel" width="100%">
+<img src="docs/demo.gif" alt="Order builder: quantity, an added item, express delivery, notes and a coupon code update React, Vue, Svelte, Lit and Alpine islands with zero requests; Apply sends one request and PHP's discount appears everywhere; Place order sends a second and the order number appears in the Lit badge" width="100%">
 
-Editing any view updates the other seven **without an HTTP request**. Committing and
-running PHP actions are explicit. Changes made by PHP propagate back to all views.
-No Livewire, Alpine, or frontend framework fork is involved.
+Edits in any island update every other island **without a request**: the request
+counter stays at 0 and the "What PHP last rendered" panel doesn't move. **Apply**
+(a PHP action) sends every pending edit plus the call in one request; PHP validates the
+coupon, and its discount flows back into the Vue totals and the Lit badge. **Place
+order** validates in PHP and writes an order number that every island shows.
 
-Lit and Alpine show that an adapter is optional. Each field binding is a plain
-external store (`getSnapshot`/`subscribe`/`set`), so Lit and Alpine use it directly:
-subscribe on connect/`init`, unsubscribe on disconnect/`destroy`, and read
+No Livewire, Alpine, or frontend framework fork is involved. Lit and Alpine use no
+adapter: a field binding is a plain external store (`getSnapshot`/`subscribe`/`set`),
+so they subscribe on connect/`init`, unsubscribe on disconnect/`destroy`, and read
 `getSnapshot()` in between.
+
+A second page, the **renderer matrix** (`/poc/wire-bridge`), puts the same form in
+all eight renderers (Blade, Preact, Solid, React, Vue, Svelte, Lit, Alpine) side by side.
+It is what the compatibility test suite runs against.
 
 This app installs `wire-bridge` from npm, so it exercises the published package and
 its `exports` map rather than a vendored copy.
@@ -82,7 +87,7 @@ composer run setup            # install deps, create .env + app key + sqlite DB,
 php artisan serve
 ```
 
-Open http://127.0.0.1:8000/poc/wire-bridge.
+Open http://127.0.0.1:8000.
 
 `composer run setup` is equivalent to:
 
@@ -114,7 +119,7 @@ The package is JavaScript only; there is no Composer package. See the
 ## Run
 
 ```bash
-php artisan serve             # http://127.0.0.1:8000/poc/wire-bridge
+php artisan serve             # http://127.0.0.1:8000 → /order
 ```
 
 Or the combined dev loop:
@@ -123,15 +128,18 @@ Or the combined dev loop:
 composer run dev              # php artisan dev: serve + queue:listen + pail + vite
 ```
 
-The demo route is `/poc/wire-bridge`. A second page exists only to exercise
-`wire:navigate` (`/poc/second-page`).
+| Route | Page |
+| --- | --- |
+| `/order` | Order builder showcase (`/` redirects here) |
+| `/poc/wire-bridge` | Renderer matrix: one form in all eight renderers |
+| `/poc/second-page` | Exists only to exercise `wire:navigate` from the matrix |
 
 ## Test
 
 ```bash
 npm test                      # Vitest: framework-independent bridge contract (38 tests)
-php artisan test --compact    # PHPUnit: AMLForm behavior, validation, and route smoke tests
-npm run test:browser          # builds, then runs the Playwright acceptance matrix (21 tests)
+php artisan test --compact    # PHPUnit: OrderBuilder and AMLForm behavior, validation, routes
+npm run test:browser          # builds, then runs Playwright: order builder (4) + renderer matrix (21)
 ```
 
 The Playwright config starts `php artisan serve` on port 8457 itself and reuses an
@@ -139,8 +147,8 @@ existing server on that port. `npm run test:browser` builds first; if you run
 `npx playwright test` directly, run `npm run build` before it, because the suite reads
 `public/build/manifest.json` to intercept lazy renderer chunks.
 
-To regenerate `docs/demo.gif`, run `node tools/capture-readme-demo.mjs --all`
-while the app is served on port 8457, then run the ffmpeg commands it prints.
+To regenerate `docs/demo.gif`, run `node tools/capture-readme-demo.mjs` while the app
+is served on port 8457, then run the ffmpeg commands it prints.
 
 ## How it works
 
@@ -149,7 +157,7 @@ Blade inputs <--> Livewire browser state
 Livewire browser state --$watch('data')--> bridge snapshot cache
 bridge snapshot cache --field subscriptions--> framework islands
 framework islands --bridge.field().set()--> Livewire browser state
-Livewire browser state <-- HTTP commit / call --> AMLForm.php
+Livewire browser state <-- HTTP commit / call --> Livewire component (PHP)
 ```
 
 The bridge itself is the [`wire-bridge`](https://github.com/HelgeSverre/wire-bridge) npm
@@ -217,7 +225,23 @@ implements the automatic JSX runtime, so the pragma is enough and no Babel is
 involved. The cost is losing React Fast Refresh in dev, which a testbed does not
 need. Vue and Svelte are keyed off their file extensions and cannot collide.
 
-## Demo behavior
+## Order builder
+
+`app/Livewire/OrderBuilder.php` holds the whole order in one `$data` array: customer,
+items, delivery, shipping rates, coupon, notes, and the placed order. The islands live
+in `resources/js/order/`; each mounts into a `wire:ignore` host in
+`resources/views/livewire/order-builder.blade.php`.
+
+- **PHP owns the rules.** `applyCoupon()` normalizes the code and accepts `SPRING10`
+  (10%) or `WELCOME25` (25%). `placeOrder()` validates the customer and items, then
+  writes an order number (`WB-1001`, …). No database.
+- **Totals are computed twice, on purpose.** Vue and Lit compute them locally from the
+  snapshot (`resources/js/order/pricing.js`) so they update while you edit;
+  `OrderBuilder::totals()` computes the same numbers in PHP for the "What PHP last
+  rendered" panel, which only changes after a request.
+- The request counter in the header counts every Livewire request (`Livewire.hook('request')`).
+
+## Renderer matrix
 
 Eight panels (Blade, Preact, Solid, React, Vue, Svelte, Lit, Alpine) share one
 `AMLForm` state. Under them sit two inspectors:
@@ -228,12 +252,7 @@ Eight panels (Blade, Preact, Solid, React, Vue, Svelte, Lit, Alpine) share one
 Typing never updates the server inspector; edits stay local until a request is sent.
 **Commit** sends the pending edits as-is. **Normalize (PHP)**, **Reset form (PHP)**,
 **Replace owners (PHP)**, **Save (PHP, demo)** and the wrapper toggles send them along
-with a PHP action. After any of these, the server inspector catches up.
-
-When a request changes the postal code to one PHP knows (`0150` Oslo, `5003` Bergen,
-`7010` Trondheim, `4006` Stavanger, `9008` Tromsø), `AMLForm::updatedData()` fills in
-the city. Type `0150` into any panel and click **Commit**: the city becomes Oslo in
-every panel, showing a server-side change flowing back through the bridge. Save writes a
+with a PHP action. After any of these, the server inspector catches up. Save writes a
 demonstration receipt, not a database row. The Mount/Unmount buttons add and remove
 each framework host locally.
 

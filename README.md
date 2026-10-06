@@ -33,7 +33,8 @@ differences, and the slow-request characterization. The original brief is
 
 ## Version baseline
 
-Everything below is the exact installed baseline of this PoC.
+Versions this example was built and tested against (pinned by `composer.lock` and
+`package-lock.json`).
 
 | Tool | Version |
 | --- | --- |
@@ -146,29 +147,13 @@ suite reads the Vite manifest to intercept lazy renderer chunks.
 ```
 Blade inputs <--> Livewire browser state
 Livewire browser state --$watch('data')--> bridge snapshot cache
-bridge snapshot cache --field subscriptions--> Preact and Solid views
-Preact and Solid views --bridge.field().set()--> Livewire browser state
+bridge snapshot cache --field subscriptions--> framework islands
+framework islands --bridge.field().set()--> Livewire browser state
 Livewire browser state <-- HTTP commit / call --> AMLForm.php
 ```
 
-The bridge itself lives in the [`wire-bridge`](https://github.com/HelgeSverre/wire-bridge)
-npm package:
-
-- **`wire-bridge`** — `createWireBridge($wire, { root })`. One root watcher per
-  bridge. It caches a frozen, structurally shared snapshot of the root; field
-  bindings are stable cached objects with `getSnapshot/subscribe/set`. Every
-  published snapshot is re-read from `$wire`; the cache is never a second writable
-  store.
-- **`wire-bridge/json`** — JSON value validation/copying, path parsing, structural
-  equality, and deep freezing. Values are copied before they reach `$wire`, and
-  non-JSON values (functions, `undefined` members, `Date`, cycles, non-finite
-  numbers, …) are rejected with descriptive errors.
-- **`wire-bridge/livewire`** — the lease registry keyed by component ID + root
-  (sibling hosts share one bridge; the last lease release disposes it) and the
-  `wire:frontend` directive. The directive acquires a lease, registers cleanup
-  before any lazy import, and never mounts a renderer whose host was removed while
-  its module was loading.
-- **`wire-bridge/{preact,react,solid,svelte,vue}`** — the framework adapters.
+The bridge itself is the [`wire-bridge`](https://github.com/HelgeSverre/wire-bridge) npm
+package; its README documents the API.
 
 This repo owns only the demo:
 

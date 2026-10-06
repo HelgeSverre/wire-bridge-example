@@ -221,12 +221,12 @@ Eight panels (Blade, Preact, React, Solid, Svelte, Vue, Lit, Alpine) share one
 locally) and a last server-rendered state inspector (plain Blade JSON, changed only
 after a server render). The controls commit, normalize on the server, reset the
 whole root, replace owners, save (a demonstration receipt, no database), and locally
-mount/unmount the Preact and Solid hosts. A server-controlled toggle removes and
-restores the Preact and Solid wrappers during a Livewire morph.
+mount/unmount each framework host.
 
-Only the Preact and Solid wrappers are toggleable. They exist to prove a
-`wire:ignore` host survives being removed and reintroduced by a Livewire morph;
-repeating that proof in the other five panels would add nothing.
+A server-controlled toggle removes and restores the Preact and Solid wrappers during a
+Livewire morph, proving a `wire:ignore` host survives being removed and reintroduced.
+Only those two wrappers have it; repeating the proof in the other panels would add
+nothing.
 
 A second `AMLForm` instance at the bottom of the page has its own bridge, proving
 instance isolation.

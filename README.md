@@ -1,7 +1,9 @@
-# wire-bridge — Livewire framework bridge PoC
+# wire-bridge-example
 
-A proof of concept that one mounted Livewire component can own form state for eight
-renderers at once:
+A runnable Laravel + Livewire 4 app for [wire-bridge](https://github.com/HelgeSverre/wire-bridge)
+([npm](https://www.npmjs.com/package/wire-bridge)). Clone it, install it, and open one
+page where a single mounted Livewire component owns form state for eight renderers at
+once:
 
 - **Blade** inputs using deferred `wire:model`
 - a **Preact** island using `useSyncExternalStore` from `preact/compat`
@@ -22,8 +24,8 @@ store (`getSnapshot`/`subscribe`/`set`), so a framework only needs a package ada
 when it has a reactivity primitive to convert into. Lit and Alpine consume the
 binding directly in about six lines.
 
-This app consumes the package from `../wire-bridge-pkg` via a `file:` dependency, so
-it exercises the real published `exports` map rather than a vendored copy.
+This app installs `wire-bridge` from npm, so it exercises the published package and
+its `exports` map rather than a vendored copy.
 
 See [`findings.md`](findings.md) for the measured results, installed-version
 differences, and the slow-request characterization. The original brief is
@@ -68,19 +70,49 @@ build:
 `$watch` subscription while the component remains mounted. The bridge refuses to
 initialize (visible `WireBridgeCompatibilityError`) if `$watch` returns no disposer.
 
-## Setup
+## Install
 
-Prerequisites: PHP 8.3+, Composer, Node 22+, and a Playwright browser.
+Prerequisites: PHP 8.3+, Composer, Node 22+. The browser suite also needs Playwright's
+Chromium.
+
+```bash
+git clone https://github.com/HelgeSverre/wire-bridge-example.git
+cd wire-bridge-example
+composer run setup            # composer install, .env, app key, sqlite migrate, npm install, npm run build
+php artisan serve
+```
+
+Open http://127.0.0.1:8000/poc/wire-bridge.
+
+`composer run setup` is equivalent to:
 
 ```bash
 composer install
-npm install
-cp .env.example .env          # if .env does not exist
+cp .env.example .env
 php artisan key:generate
-php artisan migrate           # creates the default sqlite tables
+touch database/database.sqlite
+php artisan migrate
+npm install
 npm run build
+```
+
+`.npmrc` sets `ignore-scripts=true`, so `npm install` runs no package install scripts.
+
+To run the browser suite:
+
+```bash
 npx playwright install chromium
 ```
+
+### Using wire-bridge in your own app
+
+```bash
+npm install wire-bridge
+```
+
+The package is JavaScript only; there is no Composer package. See the
+[wire-bridge README](https://github.com/HelgeSverre/wire-bridge#readme) for the API.
+`resources/js/poc/runtime.js` shows the full wiring used here.
 
 ## Run
 
@@ -102,7 +134,7 @@ The demo route is `/poc/wire-bridge`. A second page exists only to exercise
 ```bash
 npm test                      # Vitest: framework-independent bridge contract (38 tests)
 php artisan test --compact    # PHPUnit: AMLForm behavior, validation, and route smoke tests
-npm run test:browser          # builds, then runs the Playwright acceptance matrix (19 tests)
+npm run test:browser          # builds, then runs the Playwright acceptance matrix (21 tests)
 ```
 
 The Playwright config starts `php artisan serve` on port 8457 itself and reuses an
@@ -119,8 +151,8 @@ Preact and Solid views --bridge.field().set()--> Livewire browser state
 Livewire browser state <-- HTTP commit / call --> AMLForm.php
 ```
 
-The bridge itself lives in the `wire-bridge` package, linked from
-`../wire-bridge-pkg`:
+The bridge itself lives in the [`wire-bridge`](https://github.com/HelgeSverre/wire-bridge)
+npm package:
 
 - **`wire-bridge`** — `createWireBridge($wire, { root })`. One root watcher per
   bridge. It caches a frozen, structurally shared snapshot of the root; field
@@ -181,9 +213,8 @@ inspector is plain Blade so it can never be bound to browser state.
 
 ### Build isolation
 
-Seven renderers share one Vite config. Two things make that work.
-
-**Three JSX dialects, no plugin conflict.**
+Seven renderers share one Vite config. Three JSX dialects coexist with no plugin
+conflict:
 
 - `vite.config.js` registers `vite-plugin-solid` with `include: ['**/poc/solid/**']`,
   so Solid files are transformed before esbuild sees them.
@@ -197,23 +228,6 @@ which conflicts with the Babel 7 that `vite-plugin-solid` pins. esbuild already
 implements the automatic JSX runtime, so the pragma is enough and no Babel is
 involved. The cost is losing React Fast Refresh in dev, which a testbed does not
 need. Vue and Svelte are keyed off their file extensions and cannot collide.
-
-**Deduping the linked package.**
-
-`wire-bridge` is linked from `../wire-bridge-pkg`, which keeps its own copies of
-these frameworks as devDependencies so it can typecheck its adapters. Without
-`resolve.dedupe`, `wire-bridge/react` would import *that* React while the demo
-component imports the app's — two instances, and every hook fails with a null
-dispatcher. `vite.config.js` therefore sets:
-
-```js
-resolve: {
-    dedupe: ['preact', 'react', 'react-dom', 'solid-js', 'vue', 'svelte'],
-},
-```
-
-This is purely an artifact of the local `file:` link. Installing `wire-bridge` from
-npm puts one copy of each framework in the tree and needs no dedupe.
 
 ## Demo behavior
 

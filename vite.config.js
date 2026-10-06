@@ -33,16 +33,6 @@ export default defineConfig({
         svelte(),
     ],
 
-    resolve: {
-        // wire-bridge is linked from ../wire-bridge-pkg, which keeps its own
-        // copies of these frameworks as devDependencies for typechecking.
-        // Without deduping, the adapters would import that second copy and
-        // every hook would run against a dispatcher belonging to a different
-        // instance. Consumers installing wire-bridge from npm never hit this;
-        // it is purely an artifact of the local file: link.
-        dedupe: ['preact', 'react', 'react-dom', 'solid-js', 'vue', 'svelte'],
-    },
-
     esbuild: {
         // React deliberately has no plugin: @vitejs/plugin-react pulls in
         // Babel 8, which conflicts with the Babel 7 that vite-plugin-solid

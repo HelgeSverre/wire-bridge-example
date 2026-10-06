@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "helgesverre/wire-bridge-example",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Example Laravel + Livewire app for wire-bridge: one Livewire component shared by Blade, Preact, React, Solid, Svelte, Vue, Lit and Alpine.",
+    "keywords": ["laravel", "livewire", "wire-bridge", "example"],
     "license": "MIT",
     "require": {
         "php": "^8.3",

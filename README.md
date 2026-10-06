@@ -15,28 +15,25 @@ once:
 - an **Alpine** island using `x-data` with `init`/`destroy`, with no adapter in the
   package and no dependency installed — Livewire already ships Alpine
 
-<img src="docs/demo.gif" alt="Eight panels (Livewire, Preact, Solid, React, Vue, Svelte, Lit, Alpine) editing one shared Livewire state, with a request counter that stays at 0" width="100%">
+<img src="docs/demo.gif" alt="Eight panels (Blade, Preact, Solid, React, Vue, Svelte, Lit, Alpine) editing one shared Livewire state, with a request counter that stays at 0" width="100%">
 
 Editing any view updates the other seven **without an HTTP request**. Committing and
 running PHP actions are explicit. Changes made by PHP propagate back to all views.
 No Livewire, Alpine, or frontend framework fork is involved.
 
-Lit and Alpine are the point of the exercise: the bridge exposes a plain external
-store (`getSnapshot`/`subscribe`/`set`), so a framework only needs a package adapter
-when it has a reactivity primitive to convert into. Lit and Alpine consume the
-binding directly in about six lines.
+Lit and Alpine show that an adapter is optional. Each field binding is a plain
+external store (`getSnapshot`/`subscribe`/`set`), so Lit and Alpine use it directly:
+subscribe on connect/`init`, unsubscribe on disconnect/`destroy`, and read
+`getSnapshot()` in between.
 
 This app installs `wire-bridge` from npm, so it exercises the published package and
 its `exports` map rather than a vendored copy.
 
-See [`findings.md`](findings.md) for the measured results, installed-version
-differences, and the slow-request characterization. The original brief is
-[`spec.md`](spec.md).
-
 ## Version baseline
 
-Versions this example was built and tested against (pinned by `composer.lock` and
-`package-lock.json`).
+Versions this example was built and tested against. Packages are pinned by
+`composer.lock` and `package-lock.json`; PHP, Node and the skeleton version are as
+recorded at build time.
 
 | Tool | Version |
 | --- | --- |
@@ -81,7 +78,7 @@ Chromium.
 ```bash
 git clone https://github.com/HelgeSverre/wire-bridge-example.git
 cd wire-bridge-example
-composer run setup            # composer install, .env, app key, sqlite migrate, npm install, npm run build
+composer run setup            # install deps, create .env + app key + sqlite DB, build assets
 php artisan serve
 ```
 
@@ -91,15 +88,12 @@ Open http://127.0.0.1:8000/poc/wire-bridge.
 
 ```bash
 composer install
-cp .env.example .env
+cp -n .env.example .env       # only if .env does not exist
 php artisan key:generate
-touch database/database.sqlite
-php artisan migrate
-npm install
+php artisan migrate --force   # creates database/database.sqlite if missing
+npm install --ignore-scripts
 npm run build
 ```
-
-`.npmrc` sets `ignore-scripts=true`, so `npm install` runs no package install scripts.
 
 To run the browser suite:
 
@@ -126,7 +120,7 @@ php artisan serve             # http://127.0.0.1:8000/poc/wire-bridge
 Or the combined dev loop:
 
 ```bash
-composer run dev              # php artisan serve + queue + vite dev + pail
+composer run dev              # php artisan dev: serve + queue:listen + pail + vite
 ```
 
 The demo route is `/poc/wire-bridge`. A second page exists only to exercise
@@ -141,8 +135,12 @@ npm run test:browser          # builds, then runs the Playwright acceptance matr
 ```
 
 The Playwright config starts `php artisan serve` on port 8457 itself and reuses an
-existing server on that port. Run `npm run build` before the browser suite; the
-suite reads the Vite manifest to intercept lazy renderer chunks.
+existing server on that port. `npm run test:browser` builds first; if you run
+`npx playwright test` directly, run `npm run build` before it, because the suite reads
+`public/build/manifest.json` to intercept lazy renderer chunks.
+
+To regenerate `docs/demo.gif`, run `node tools/capture-readme-demo.mjs --all`
+while the app is served on port 8457, then run the ffmpeg commands it prints.
 
 ## How it works
 
@@ -169,9 +167,9 @@ This repo owns only the demo:
 ### Deferred writes, commit, and PHP actions
 
 `field.set(value)` only calls `$wire.$set(path, value, false)`. That mutates
-Livewire's local browser state synchronously and returns a resolved promise — no
-request. The bridge refreshes its cache immediately and again when the watcher
-fires, so all renderers converge locally.
+Livewire's local browser state synchronously and returns a promise that settles
+once Livewire's local `$set` does — no request. The bridge refreshes its cache
+immediately and again when the watcher fires, so all renderers converge locally.
 
 Nothing is sent to PHP until:
 
@@ -194,6 +192,9 @@ and each renderer owns exactly one `wire:ignore` host:
 ```blade
 <div wire:ignore wire:frontend="preact" wire:key="aml-preact-host"></div>
 ```
+
+(Simplified: the demo wraps each host in a `wire:ignore` slot so the local
+Mount/Unmount buttons can reinsert it.)
 
 Blade never renders dynamic descendants inside a host, and the server-state
 inspector is plain Blade so it can never be bound to browser state.
@@ -218,7 +219,7 @@ need. Vue and Svelte are keyed off their file extensions and cannot collide.
 
 ## Demo behavior
 
-Eight panels (Blade, Preact, React, Solid, Svelte, Vue, Lit, Alpine) share one
+Eight panels (Blade, Preact, Solid, React, Vue, Svelte, Lit, Alpine) share one
 `AMLForm` state. Under them sit two inspectors:
 
 - **Browser state** — the bridge snapshot, updated locally on every edit.
@@ -236,8 +237,9 @@ Livewire morph, proving a `wire:ignore` host survives being removed and reintrod
 Only those two wrappers have it; repeating the proof in the other panels would add
 nothing.
 
-A second `AMLForm` instance at the bottom of the page has its own bridge, proving
-instance isolation.
+A second, compact `AMLForm` instance at the bottom (Blade inputs and its own
+browser-state inspector, no framework islands) has its own bridge, proving instance
+isolation.
 
 ## Limitations
 
@@ -251,4 +253,4 @@ instance isolation.
 - `owners.0.name` follows the array index, not owner identity. Repeater identity
   management is out of scope.
 - Edits made while a request is in flight are subject to Livewire's merge
-  behavior. See `findings.md` for the measured cases.
+  behavior.

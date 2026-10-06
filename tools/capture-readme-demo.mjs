@@ -31,11 +31,11 @@ const OVERLAY_CSS = `
   .order-footer { display: none !important; }
 
   .wb-flash { animation: wb-flash .9s ease-out; border-radius: 6px; }
-  @keyframes wb-flash { 0% { background: #ffe066; box-shadow: 0 0 0 4px #ffe066; } 100% { background: transparent; box-shadow: none; } }
+  @keyframes wb-flash { 0% { background: #ffd40055; box-shadow: 0 0 0 4px #ffd40055; } 100% { background: transparent; box-shadow: none; } }
 
   #wb-caption {
     position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 99999;
-    padding: 10px 18px; border-radius: 999px; background: #17222d; color: #fff;
+    padding: 10px 18px; border-radius: 999px; background: #f4f7fb; color: #0b0e14;
     font: 600 15px/1.2 var(--font-sans); box-shadow: 0 10px 30px rgb(0 0 0 / .25);
     transition: opacity .25s;
   }

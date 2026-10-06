@@ -1,7 +1,30 @@
 /* The order builder showcase (resources/views/order.blade.php). */
 
 .order-body {
-    background: #f3f5f8;
+    --ink: #e6ebf3;
+    --muted: #8b98ad;
+    --line: #263041;
+    --surface: #11151d;
+    --field: #0a0e15;
+    --ok: #4ade80;
+    --danger: #f87171;
+
+    /* Framework colours: each card's outline and chip. */
+    --blade: #fb70a9;
+    --react: #61dafb;
+    --vue: #42b883;
+    --svelte: #ff6a3d;
+    --lit: #7b93ff;
+    --alpine: #77c1d2;
+    --php: #f4c430;
+
+    color-scheme: dark;
+    background: #0b0e14;
+    color: var(--ink);
+}
+
+.order-body a {
+    color: var(--lit);
 }
 
 .order-page {
@@ -40,9 +63,10 @@
     gap: 0.6rem;
     padding: 0.45rem 0.9rem;
     border-radius: 999px;
-    background: #fff;
-    border: 1px solid var(--line);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--lit) 60%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--lit) 20%, transparent),
+        0 12px 32px -18px var(--lit);
     font-weight: 600;
 }
 
@@ -50,8 +74,8 @@
     content: 'Lit';
     font-size: 0.68rem;
     font-weight: 700;
-    color: #3451d1;
-    background: #e9edff;
+    color: var(--lit);
+    background: color-mix(in srgb, var(--lit) 16%, transparent);
     border-radius: 999px;
     padding: 0.1rem 0.45rem;
 }
@@ -67,9 +91,9 @@
 .request-pill {
     padding: 0.45rem 0.9rem;
     border-radius: 999px;
-    background: #e9f7ef;
-    border: 1px solid #b6e3c8;
-    color: #146c3f;
+    background: #0f2a1c;
+    border: 1px solid #1f6b45;
+    color: #6ee7a8;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
@@ -97,12 +121,22 @@
 }
 
 .card {
-    background: #fff;
-    border: 1px solid var(--line);
+    --fw: var(--line);
+
+    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--fw) 55%, transparent);
     border-radius: 14px;
     padding: 1rem 1.1rem 1.1rem;
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--fw) 18%, transparent),
+        0 18px 44px -26px var(--fw);
 }
+
+.card-customer { --fw: var(--blade); }
+.card-items { --fw: var(--react); }
+.card-totals { --fw: var(--vue); }
+.card-checkout { --fw: var(--svelte); }
+.card-notes { --fw: var(--alpine); }
+.card-php { --fw: var(--php); }
 
 .card-header {
     display: flex;
@@ -114,6 +148,7 @@
 .card-header h2 {
     margin: 0;
     font-size: 1rem;
+    color: #fff;
 }
 
 .card-note {
@@ -128,12 +163,17 @@
     padding: 0.15rem 0.55rem;
 }
 
-.chip-blade { color: #c2185b; background: #fde7f0; }
-.chip-react { color: #0b7fa3; background: #e3f6fc; }
-.chip-vue { color: #2f855a; background: #e3f5ec; }
-.chip-svelte { color: #c2410c; background: #ffede4; }
-.chip-alpine { color: #2b7a8c; background: #e4f3f6; }
-.chip-php { color: #5b45b0; background: #efebfb; }
+.chip-blade { --fw: var(--blade); }
+.chip-react { --fw: var(--react); }
+.chip-vue { --fw: var(--vue); }
+.chip-svelte { --fw: var(--svelte); }
+.chip-alpine { --fw: var(--alpine); }
+.chip-php { --fw: var(--php); }
+
+.chip {
+    color: var(--fw);
+    background: color-mix(in srgb, var(--fw) 15%, transparent);
+}
 
 .muted {
     color: var(--muted);
@@ -154,12 +194,21 @@
     font: inherit;
     font-size: 0.95rem;
     color: var(--ink);
-    border: 1px solid var(--line);
+    border: 1px solid #2a3342;
     border-radius: 8px;
     padding: 0.5rem 0.65rem;
-    background: #fff;
+    background: var(--field);
     width: 100%;
     box-sizing: border-box;
+}
+
+.order-field input:focus,
+.coupon input:focus,
+.notes textarea:focus,
+.add-item:focus {
+    outline: none;
+    border-color: var(--fw);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--fw) 30%, transparent);
 }
 
 .field-error {
@@ -180,6 +229,7 @@
     padding: 0.6rem 0.7rem;
     border: 1px solid var(--line);
     border-radius: 10px;
+    background: var(--field);
 }
 
 .line-item-name {
@@ -207,9 +257,11 @@
 .stepper button {
     width: 1.8rem;
     height: 1.8rem;
+    padding: 0;
     border-radius: 999px;
-    border: 1px solid var(--line);
-    background: #fff;
+    border: 1px solid #2f3a4d;
+    background: #161c27;
+    color: var(--ink);
     font-size: 1rem;
     cursor: pointer;
 }
@@ -271,9 +323,13 @@
     cursor: pointer;
 }
 
+.delivery-option input {
+    accent-color: var(--svelte);
+}
+
 .delivery-option.selected {
-    border-color: #f08a5d;
-    background: #fff6f1;
+    border-color: var(--svelte);
+    background: color-mix(in srgb, var(--svelte) 10%, transparent);
 }
 
 .coupon {
@@ -303,9 +359,15 @@
     white-space: nowrap;
     border-radius: 8px;
     padding: 0.5rem 0.85rem;
-    border: 1px solid var(--line);
-    background: #fff;
+    border: 1px solid #2f3a4d;
+    background: #161c27;
+    color: var(--ink);
     cursor: pointer;
+}
+
+.order-body button:hover:not(:disabled) {
+    border-color: var(--fw);
+    color: var(--ink);
 }
 
 .button:disabled {
@@ -313,15 +375,16 @@
 }
 
 .button-primary {
-    background: var(--ink);
-    border-color: var(--ink);
-    color: #fff;
+    background: var(--php);
+    border-color: var(--php);
+    color: #14100a;
 }
 
-.button.button-primary:hover:not(:disabled),
+.order-body .button.button-primary:hover:not(:disabled),
 .button.button-primary:focus {
-    background: #26384a;
-    color: #fff;
+    background: #ffd65a;
+    border-color: #ffd65a;
+    color: #14100a;
 }
 
 .tag {
@@ -331,8 +394,13 @@
     padding: 0.05rem 0.4rem;
     margin-left: 0.25rem;
     vertical-align: 1px;
-    color: #5b45b0;
-    background: #efebfb;
+    color: var(--php);
+    background: color-mix(in srgb, var(--php) 16%, transparent);
+}
+
+.button-primary .tag {
+    color: #14100a;
+    background: rgb(0 0 0 / 0.12);
 }
 
 .notes {

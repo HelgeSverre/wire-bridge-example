@@ -11,7 +11,7 @@
         <header class="page-header">
             <h1>wire-bridge</h1>
             <p>
-                One <code>AMLForm</code> Livewire component. Three renderers. Deferred local edits,
+                One <code>AMLForm</code> Livewire component. Eight renderers. Deferred local edits,
                 explicit commit, and PHP actions. No database.
             </p>
             <p>

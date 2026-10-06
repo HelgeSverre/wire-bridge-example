@@ -15,11 +15,13 @@ once:
 - an **Alpine** island using `x-data` with `init`/`destroy`, with no adapter in the
   package and no dependency installed — Livewire already ships Alpine
 
+<img src="docs/demo.gif" alt="Eight panels (Livewire, Preact, Solid, React, Vue, Svelte, Lit, Alpine) editing one shared Livewire state, with a request counter that stays at 0" width="100%">
+
 Editing any view updates the other seven **without an HTTP request**. Committing and
 running PHP actions are explicit. Changes made by PHP propagate back to all views.
 No Livewire, Alpine, or frontend framework fork is involved.
 
-The last two are the point of the exercise: the bridge exposes a plain external
+Lit and Alpine are the point of the exercise: the bridge exposes a plain external
 store (`getSnapshot`/`subscribe`/`set`), so a framework only needs a package adapter
 when it has a reactivity primitive to convert into. Lit and Alpine consume the
 binding directly in about six lines.
@@ -219,7 +221,10 @@ need. Vue and Svelte are keyed off their file extensions and cannot collide.
 Eight panels (Blade, Preact, React, Solid, Svelte, Vue, Lit, Alpine) share one
 `AMLForm` state. Under them sit a browser-state inspector (bridge snapshot, updated
 locally) and a last server-rendered state inspector (plain Blade JSON, changed only
-after a server render). The controls commit, normalize on the server, reset the
+after a server render). Typing never updates the server inspector: edits stay local
+until a button sends a request. **Commit** sends the pending edits as-is; **Normalize**,
+**Reset form**, **Replace owners**, **Save** and the wrapper toggles send them along with
+a PHP action. After any of these, the server inspector catches up. The controls commit, normalize on the server, reset the
 whole root, replace owners, save (a demonstration receipt, no database), and locally
 mount/unmount each framework host.
 

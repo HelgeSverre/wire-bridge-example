@@ -3,7 +3,10 @@
  *
  * Usage (from the app root, with the PoC server on 127.0.0.1:8457):
  *
- *   node tools/capture-readme-demo.mjs [outputDir]
+ *   node tools/capture-readme-demo.mjs [outputDir] [--all]
+ *
+ * The default take shows Blade, Preact and Solid (the wire-bridge package
+ * README). `--all` shows all eight renderers (this repo's README).
  *
  * Produces `demo.webm` in the output directory; convert to GIF with the
  * ffmpeg commands printed at the end.
@@ -15,13 +18,23 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const outputDir = resolve(process.argv[2] ?? join(here, '.capture'));
+const args = process.argv.slice(2);
+const allPanels = args.includes('--all');
+const outputDir = resolve(args.find((arg) => !arg.startsWith('--')) ?? join(here, '.capture'));
 const videoDir = join(outputDir, 'raw');
 
 rmSync(outputDir, { recursive: true, force: true });
 mkdirSync(videoDir, { recursive: true });
 
 const APP_URL = 'http://127.0.0.1:8457/poc/wire-bridge';
+
+const PANEL_COLORS = {
+    react: '#61dafb',
+    vue: '#42b883',
+    svelte: '#ff6a3d',
+    lit: '#7b93ff',
+    alpine: '#77c1d2',
+};
 
 const THEME_CSS = `
   body { background: #0a0c11 !important; }
@@ -41,6 +54,17 @@ const THEME_CSS = `
   .field input:focus, .field input:focus-visible { outline: none !important; }
   .owners { border-color: #232b38 !important; }
   .owners legend { color: #7d8aa0 !important; }
+
+  ${allPanels ? `
+  .panels { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  .owners, .panel-note, .field:has(input[data-testid*='owner']) { display: none !important; }
+  .field { min-width: 0 !important; }
+  .field input[type='text'] { width: 100% !important; min-width: 0 !important; box-sizing: border-box !important; }
+  ${Object.entries(PANEL_COLORS).map(([name, color]) => `
+  [data-testid='panel-${name}'] { border-color: ${color} !important; box-shadow: 0 0 0 1px ${color}55, 0 18px 50px -18px ${color}aa !important; }
+  [data-testid='panel-${name}'] h2 { color: ${color} !important; }
+  [data-testid='panel-${name}'] input:focus { border-color: ${color} !important; box-shadow: 0 0 0 2px ${color}55 !important; }`).join('')}
+  ` : ''}
 
   [data-testid='panel-blade'] { border-color: #fb70a9 !important; box-shadow: 0 0 0 1px #fb70a955, 0 18px 50px -18px #fb70a9aa !important; }
   [data-testid='panel-blade'] h2 { color: #fb70a9 !important; }
@@ -90,11 +114,13 @@ const THEME_CSS = `
   @keyframes wb-click { 0% { box-shadow: 0 0 0 4px #ffffffaa, 0 0 26px #ffd400; } 100% { box-shadow: 0 0 0 4px #ffd40033, 0 0 18px #ffd400aa; } }
 `;
 
+const VIEWPORT_HEIGHT = allPanels ? 760 : 560;
+
 const browser = await chromium.launch({ channel: 'chromium' });
 const context = await browser.newContext({
-    viewport: { width: 1280, height: 560 },
+    viewport: { width: 1280, height: VIEWPORT_HEIGHT },
     deviceScaleFactor: 2,
-    recordVideo: { dir: videoDir, size: { width: 1280, height: 560 } },
+    recordVideo: { dir: videoDir, size: { width: 1280, height: VIEWPORT_HEIGHT } },
 });
 
 // Count Livewire update requests from before any page script runs.
@@ -131,12 +157,19 @@ await page.waitForFunction(() => window.__wireBridgePoc?.registered?.() === true
 
 await page.addStyleTag({ content: THEME_CSS });
 
-await page.evaluate(() => {
+await page.evaluate((allPanels) => {
     // Bold renderer labels.
     const labels = {
         'panel-blade': 'LIVEWIRE',
         'panel-preact': 'PREACT',
         'panel-solid': 'SOLID',
+        ...(allPanels ? {
+            'panel-react': 'REACT',
+            'panel-vue': 'VUE',
+            'panel-svelte': 'SVELTE',
+            'panel-lit': 'LIT',
+            'panel-alpine': 'ALPINE',
+        } : {}),
     };
 
     for (const [testId, label] of Object.entries(labels)) {
@@ -148,7 +181,7 @@ await page.evaluate(() => {
     bar.id = 'wb-titlebar';
     bar.innerHTML = `
         <div class="wb-brand">wire·<em>bridge</em></div>
-        <div class="wb-claim">one Livewire state &nbsp;→&nbsp; three renderers, editing together</div>
+        <div class="wb-claim">one Livewire state &nbsp;→&nbsp; ${allPanels ? 'eight' : 'three'} renderers, editing together</div>
         <div class="wb-spacer"></div>
         <div class="wb-badge" id="wb-badge"><span id="wb-requests">0</span> Livewire requests</div>
     `;
@@ -205,7 +238,7 @@ await page.evaluate(() => {
             previous.set(input, value);
         }
     }, 40);
-});
+}, allPanels);
 
 // The page renders a second, compact AMLForm instance that reuses the same
 // data-testid values, so every interaction is scoped to the first component.
@@ -232,6 +265,20 @@ const typeInto = async (selector, text) => {
 
 await page.waitForTimeout(800);
 
+if (allPanels) {
+    await typeInto('[data-testid="blade-name"]', 'Ada');
+    await page.waitForTimeout(600);
+    await typeInto('[data-testid="react-country"]', 'SE');
+    await page.waitForTimeout(600);
+    await click('[data-testid="vue-is-pep"]');
+    await page.waitForTimeout(450);
+    await typeInto('[data-testid="svelte-city"]', 'Oslo');
+    await page.waitForTimeout(500);
+    await typeInto('[data-testid="lit-postal-code"]', '0150');
+    await page.waitForTimeout(500);
+    await typeInto('[data-testid="alpine-name"]', 'Grace');
+    await page.waitForTimeout(1700);
+} else {
 // 1. Blade (Livewire) name edit.
 await typeInto('[data-testid="blade-name"]', 'Ada');
 await page.waitForTimeout(650);
@@ -247,6 +294,7 @@ await typeInto('[data-testid="solid-city"]', 'Oslo');
 await page.waitForTimeout(500);
 await typeInto('[data-testid="solid-postal-code"]', '0001');
 await page.waitForTimeout(1700);
+}
 
 const recordedRequests = await page.evaluate(() => window.__wbRequests);
 console.log(`Livewire update requests during the take: ${recordedRequests}`);

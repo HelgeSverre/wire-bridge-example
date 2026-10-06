@@ -117,6 +117,37 @@ class AMLForm extends Component
     }
 
     /**
+     * Postal codes the demo can resolve. Deliberately tiny: it exists to show a
+     * server-side change flowing back into every renderer after a commit.
+     *
+     * @var array<string, string>
+     */
+    private const CITIES_BY_POSTAL_CODE = [
+        '0150' => 'Oslo',
+        '4006' => 'Stavanger',
+        '5003' => 'Bergen',
+        '7010' => 'Trondheim',
+        '9008' => 'Tromsø',
+    ];
+
+    /**
+     * When a request changes the postal code to one PHP knows, fill in the city.
+     */
+    public function updatedData(mixed $value, string $key): void
+    {
+        if (! in_array($key, ['address', 'address.postalCode'], true)) {
+            return;
+        }
+
+        $postalCode = trim((string) ($this->data['address']['postalCode'] ?? ''));
+        $city = self::CITIES_BY_POSTAL_CODE[$postalCode] ?? null;
+
+        if ($city !== null) {
+            $this->data['address']['city'] = $city;
+        }
+    }
+
+    /**
      * Trim strings on the server and report what was normalized.
      *
      * @return array{normalized: bool, name: string, country: string, city: string, postalCode: string}

@@ -15,7 +15,7 @@ once:
 - an **Alpine** island using `x-data` with `init`/`destroy`, with no adapter in the
   package and no dependency installed — Livewire already ships Alpine
 
-<img src="docs/demo.gif" alt="Eight panels (Blade, Preact, Solid, React, Vue, Svelte, Lit, Alpine) editing one shared Livewire state with zero requests; then Commit sends one request and the PHP panel catches up, and a PHP action upper-cases the country in every panel" width="100%">
+<img src="docs/demo.gif" alt="Eight panels (Blade, Preact, Solid, React, Vue, Svelte, Lit, Alpine) editing one shared Livewire state with zero requests; a postal code is typed, then Commit sends one request and PHP fills in the city, which appears in every panel" width="100%">
 
 Editing any view updates the other seven **without an HTTP request**. Committing and
 running PHP actions are explicit. Changes made by PHP propagate back to all views.
@@ -228,7 +228,12 @@ Eight panels (Blade, Preact, Solid, React, Vue, Svelte, Lit, Alpine) share one
 Typing never updates the server inspector; edits stay local until a request is sent.
 **Commit** sends the pending edits as-is. **Normalize (PHP)**, **Reset form (PHP)**,
 **Replace owners (PHP)**, **Save (PHP, demo)** and the wrapper toggles send them along
-with a PHP action. After any of these, the server inspector catches up. Save writes a
+with a PHP action. After any of these, the server inspector catches up.
+
+When a request changes the postal code to one PHP knows (`0150` Oslo, `5003` Bergen,
+`7010` Trondheim, `4006` Stavanger, `9008` Tromsø), `AMLForm::updatedData()` fills in
+the city. Type `0150` into any panel and click **Commit**: the city becomes Oslo in
+every panel, showing a server-side change flowing back through the bridge. Save writes a
 demonstration receipt, not a database row. The Mount/Unmount buttons add and remove
 each framework host locally.
 

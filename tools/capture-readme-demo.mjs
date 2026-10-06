@@ -209,14 +209,13 @@ await page.evaluate((allPanels) => {
         <div class="wb-claim" id="wb-claim">one Livewire state &nbsp;→&nbsp; ${allPanels ? 'eight' : 'three'} renderers, editing locally</div>
         <div class="wb-spacer"></div>
         <button type="button" class="wb-action" id="wb-commit">Commit</button>
-        <button type="button" class="wb-action" id="wb-normalize">Normalize (PHP)</button>
         <div class="wb-badge" id="wb-badge"><span id="wb-requests">0</span> <span id="wb-requests-label">Livewire requests</span></div>
     `;
     document.body.appendChild(bar);
 
-    // The title-bar buttons press the page's real control buttons, which sit in
+    // The title-bar button presses the page's real Commit control, which sits in
     // the hidden toolbar, so every request the counter shows is real.
-    for (const [overlay, control] of [['#wb-commit', 'control-commit'], ['#wb-normalize', 'control-normalize']]) {
+    for (const [overlay, control] of [['#wb-commit', 'control-commit']]) {
         bar.querySelector(overlay).addEventListener('click', (event) => {
             const button = event.currentTarget;
             button.classList.add('wb-pressed');
@@ -378,43 +377,37 @@ await page.waitForTimeout(800);
 if (allPanels) {
     await typeInto('[data-testid="blade-name"]', 'Ada');
     await page.waitForTimeout(600);
-    await typeInto('[data-testid="react-country"]', 'se');
+    await typeInto('[data-testid="react-country"]', 'SE');
     await page.waitForTimeout(600);
     await click('[data-testid="vue-is-pep"]');
     await page.waitForTimeout(450);
-    await typeInto('[data-testid="svelte-city"]', 'Oslo');
+    await typeInto('[data-testid="svelte-name"]', 'Grace');
     await page.waitForTimeout(500);
+    // The city is never typed: PHP fills it in from the postal code on commit.
     await typeInto('[data-testid="lit-postal-code"]', '0150');
-    await page.waitForTimeout(500);
-    await typeInto('[data-testid="alpine-name"]', 'Grace');
-    await page.waitForTimeout(1700);
+    await page.waitForTimeout(1500);
 } else {
 // 1. Blade (Livewire) name edit.
 await typeInto('[data-testid="blade-name"]', 'Ada');
 await page.waitForTimeout(650);
 
 // 2. Preact country edit.
-await typeInto('[data-testid="preact-country"]', 'se');
+await typeInto('[data-testid="preact-country"]', 'SE');
 await page.waitForTimeout(650);
 
-// 3. Solid checkbox + nested address edits.
+// 3. Solid checkbox + postal code. The city is never typed: PHP fills it in
+// from the postal code on commit.
 await click('[data-testid="solid-is-pep"]');
 await page.waitForTimeout(400);
-await typeInto('[data-testid="solid-city"]', 'Oslo');
-await page.waitForTimeout(500);
-await typeInto('[data-testid="solid-postal-code"]', '0001');
-await page.waitForTimeout(1700);
+await typeInto('[data-testid="solid-postal-code"]', '0150');
+await page.waitForTimeout(1500);
 }
 
-// Then the round trip: Commit sends the local edits once, and a PHP action
-// changes state on the server that flows back into every renderer.
-await claim('Commit &nbsp;→&nbsp; one request; PHP sees the edits');
+// Then the round trip: Commit sends the local edits in one request, PHP fills in
+// the city from the postal code, and that flows back into every renderer.
+await claim('Commit &nbsp;→&nbsp; one request; PHP fills in the city from the postal code');
 await pressOverlay('#wb-commit');
-await page.waitForTimeout(1800);
-
-await claim('PHP upper-cases the country &nbsp;→&nbsp; every renderer updates');
-await pressOverlay('#wb-normalize');
-await page.waitForTimeout(2400);
+await page.waitForTimeout(3000);
 
 const recordedRequests = await page.evaluate(() => window.__wbRequests);
 console.log(`Livewire update requests during the take: ${recordedRequests}`);

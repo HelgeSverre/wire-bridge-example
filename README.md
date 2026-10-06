@@ -1,4 +1,4 @@
-# wire-bridge-example
+# Wire Bridge Example
 
 A runnable Laravel + Livewire 4 app for [wire-bridge](https://github.com/HelgeSverre/wire-bridge)
 ([npm](https://www.npmjs.com/package/wire-bridge)). Clone it, install it, and open one
